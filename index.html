@@ -47,6 +47,7 @@
       border: 1px solid #ccc;
       margin-right: 8px;
       margin-bottom: 8px;
+      min-width: 190px;
     }
 
     .hidden { display: none; }
@@ -67,7 +68,7 @@
 
     table {
       border-collapse: collapse;
-      min-width: 2600px;
+      min-width: 2700px;
       background: white;
     }
 
@@ -97,6 +98,7 @@
       background: #e5e7eb;
       font-size: 12px;
       display: inline-block;
+      margin: 2px 2px 2px 0;
     }
 
     a {
@@ -133,6 +135,10 @@
 
     <select id="clienteFilter" onchange="renderTable()">
       <option value="">Todos los clientes</option>
+    </select>
+
+    <select id="clasificacionFilter" onchange="renderTable()">
+      <option value="">Todas las clasificaciones</option>
     </select>
 
     <select id="categoriaFilter" onchange="renderTable()">
@@ -225,21 +231,28 @@
   }
 
   function fillFilters() {
-    fillSelect("paisFilter", influencers.map(i => i.pais));
-    fillSelect("clienteFilter", influencers.map(i => i.cliente));
-    fillSelect("categoriaFilter", influencers.map(i => i.categoria));
-    fillSelect("estadoFilter", influencers.map(i => i.estado));
+    fillSelectSplit("paisFilter", influencers.map(i => i.pais));
+    fillSelectSplit("clienteFilter", influencers.map(i => i.cliente));
+    fillSelectSplit("clasificacionFilter", influencers.map(i => i.formula_contenido));
+    fillSelectSplit("categoriaFilter", influencers.map(i => i.categoria));
+    fillSelectSplit("estadoFilter", influencers.map(i => i.estado));
   }
 
-  function fillSelect(id, values) {
+  function fillSelectSplit(id, values) {
     const select = document.getElementById(id);
     const current = select.value;
     const firstText = select.options[0].text;
 
     select.innerHTML = `<option value="">${firstText}</option>`;
 
-    [...new Set(values.filter(Boolean))]
-      .sort()
+    const cleanValues = values
+      .filter(Boolean)
+      .flatMap(value => String(value).split(","))
+      .map(value => value.trim())
+      .filter(Boolean);
+
+    [...new Set(cleanValues)]
+      .sort((a, b) => a.localeCompare(b))
       .forEach(value => {
         select.innerHTML += `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`;
       });
@@ -251,6 +264,7 @@
     const search = document.getElementById("searchInput").value.toLowerCase();
     const pais = document.getElementById("paisFilter").value;
     const cliente = document.getElementById("clienteFilter").value;
+    const clasificacion = document.getElementById("clasificacionFilter").value;
     const categoria = document.getElementById("categoriaFilter").value;
     const estado = document.getElementById("estadoFilter").value;
 
@@ -279,10 +293,11 @@
 
       return (
         (!search || searchableText.includes(search)) &&
-        (!pais || i.pais === pais) &&
-        (!cliente || i.cliente === cliente) &&
-        (!categoria || i.categoria === categoria) &&
-        (!estado || i.estado === estado)
+        (!pais || cellHasValue(i.pais, pais)) &&
+        (!cliente || cellHasValue(i.cliente, cliente)) &&
+        (!clasificacion || cellHasValue(i.formula_contenido, clasificacion)) &&
+        (!categoria || cellHasValue(i.categoria, categoria)) &&
+        (!estado || cellHasValue(i.estado, estado))
       );
     });
 
@@ -295,13 +310,13 @@
     filtered.forEach(i => {
       tbody.innerHTML += `
         <tr>
-          <td>${safe(i.pais)}</td>
-          <td>${safe(i.cliente)}</td>
+          <td>${renderBadges(i.pais)}</td>
+          <td>${renderBadges(i.cliente)}</td>
           <td><strong>${safe(i.influencer)}</strong></td>
           <td>${safe(i.tipo_contenido)}</td>
-          <td>${safe(i.formula_contenido)}</td>
+          <td>${renderBadges(i.formula_contenido)}</td>
           <td>${safe(i.precio_texto)}</td>
-          <td><span class="badge">${safe(i.categoria)}</span></td>
+          <td>${renderBadges(i.categoria)}</td>
           <td>${safe(i.ultima_persona_contacto)}</td>
           <td><strong>${safe(i.medio_contacto)}</strong></td>
           <td>${safe(i.contacto_detalle)}</td>
@@ -309,8 +324,8 @@
           <td>${formatNumber(i.seguidores_1)}</td>
           <td>${formatLink(i.red_2)}</td>
           <td>${formatNumber(i.seguidores_2)}</td>
-          <td><span class="badge">${safe(i.estado)}</span></td>
-          <td>${safe(i.condicion)}</td>
+          <td>${renderBadges(i.estado)}</td>
+          <td>${renderBadges(i.condicion)}</td>
           <td>${safe(i.trabajo_con_nosotros)}</td>
           <td>${safe(i.ultimo_pago_realizado)}</td>
           <td>${safe(i.fuente)}</td>
@@ -321,6 +336,26 @@
     });
   }
 
+  function cellHasValue(cell, selected) {
+    if (!cell || !selected) return false;
+
+    return String(cell)
+      .split(",")
+      .map(value => value.trim().toLowerCase())
+      .includes(String(selected).trim().toLowerCase());
+  }
+
+  function renderBadges(value) {
+    if (!value) return "";
+
+    return String(value)
+      .split(",")
+      .map(v => v.trim())
+      .filter(Boolean)
+      .map(v => `<span class="badge">${escapeHtml(v)}</span>`)
+      .join(" ");
+  }
+
   function formatNumber(value) {
     if (value === null || value === undefined || value === "" || value === 0) return "";
     return Number(value).toLocaleString("es-PE");
@@ -328,6 +363,7 @@
 
   function formatLink(value) {
     if (!value || value === "0") return "";
+
     const clean = String(value).trim();
 
     if (clean.startsWith("http")) {
@@ -350,9 +386,6 @@
       .replaceAll("'", "&#039;");
   }
 </script>
-
-</body>
-</html>
 
 </body>
 </html>
