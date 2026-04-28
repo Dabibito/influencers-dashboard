@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Influencers Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -14,34 +14,42 @@
 <pre id="data"></pre>
 
 <script>
-  const supabaseUrl = "uukcxcnurveoximopaqh";
+  // 🔥 CORRECCIÓN 1: URL COMPLETA
+  const supabaseUrl = "https://uukxcnurveoximopaqh.supabase.co";
+
+  // 🔥 CORRECCIÓN 2: TU PUBLISHABLE KEY (esta está bien)
   const supabaseKey = "sb_publishable_QWck9-g1w3FUXpxl8i_30g_OTo9y8g0";
 
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  // 🔥 CORRECCIÓN 3: NO usar mismo nombre "supabase"
+  const db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
   async function login() {
     const email = prompt("Email:");
     const password = prompt("Password:");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await db.auth.signInWithPassword({
       email,
       password
     });
 
     if (error) {
-      alert("Error login");
+      alert("Error login: " + error.message);
     } else {
-      alert("Logueado");
+      alert("Logueado correctamente");
     }
   }
 
   async function loadData() {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("influencers")
       .select("*")
       .limit(20);
 
-    document.getElementById("data").innerText = JSON.stringify(data, null, 2);
+    if (error) {
+      document.getElementById("data").innerText = "Error: " + error.message;
+    } else {
+      document.getElementById("data").innerText = JSON.stringify(data, null, 2);
+    }
   }
 </script>
 
