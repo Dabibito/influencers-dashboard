@@ -14,9 +14,7 @@
       color: #222;
     }
 
-    h1 {
-      margin-bottom: 4px;
-    }
+    h1 { margin-bottom: 4px; }
 
     .subtitle {
       color: #666;
@@ -41,9 +39,7 @@
       margin-right: 8px;
     }
 
-    button.secondary {
-      background: #6b7280;
-    }
+    button.secondary { background: #6b7280; }
 
     input, select {
       padding: 10px;
@@ -53,18 +49,25 @@
       margin-bottom: 8px;
     }
 
+    .hidden { display: none; }
+
+    .status {
+      margin-top: 10px;
+      color: #555;
+    }
+
     .table-wrapper {
       overflow: auto;
-      max-height: 72vh;
+      height: 70vh;
+      max-width: 100%;
       border-radius: 14px;
       background: white;
       box-shadow: 0 4px 14px rgba(0,0,0,0.08);
     }
 
     table {
-      width: max-content;
-      min-width: 100%;
       border-collapse: collapse;
+      min-width: 2600px;
       background: white;
     }
 
@@ -83,12 +86,10 @@
       color: white;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 50;
     }
 
-    tr:hover {
-      background: #f3f4f6;
-    }
+    tr:hover { background: #f3f4f6; }
 
     .badge {
       padding: 4px 8px;
@@ -96,15 +97,6 @@
       background: #e5e7eb;
       font-size: 12px;
       display: inline-block;
-    }
-
-    .status {
-      margin-top: 10px;
-      color: #555;
-    }
-
-    .hidden {
-      display: none;
     }
 
     a {
@@ -133,7 +125,7 @@
 
     <br /><br />
 
-    <input id="searchInput" placeholder="Buscar influencer..." oninput="renderTable()" />
+    <input id="searchInput" placeholder="Buscar influencer, contacto, categoría..." oninput="renderTable()" />
 
     <select id="paisFilter" onchange="renderTable()">
       <option value="">Todos los países</option>
@@ -264,14 +256,25 @@
 
     const filtered = influencers.filter(i => {
       const searchableText = [
+        i.pais,
+        i.cliente,
         i.influencer,
         i.tipo_contenido,
         i.formula_contenido,
+        i.precio_texto,
         i.categoria,
-        i.pais,
-        i.cliente,
+        i.ultima_persona_contacto,
         i.medio_contacto,
-        i.contacto_detalle
+        i.contacto_detalle,
+        i.red_1,
+        i.red_2,
+        i.estado,
+        i.condicion,
+        i.trabajo_con_nosotros,
+        i.ultimo_pago_realizado,
+        i.fuente,
+        i.duplicado,
+        i.especificaciones
       ].join(" ").toLowerCase();
 
       return (
@@ -326,9 +329,11 @@
   function formatLink(value) {
     if (!value || value === "0") return "";
     const clean = String(value).trim();
+
     if (clean.startsWith("http")) {
       return `<a href="${escapeHtml(clean)}" target="_blank">Abrir</a>`;
     }
+
     return escapeHtml(clean);
   }
 
@@ -345,6 +350,9 @@
       .replaceAll("'", "&#039;");
   }
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
