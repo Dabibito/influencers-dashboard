@@ -53,12 +53,19 @@
       margin-bottom: 8px;
     }
 
+    .table-wrapper {
+      overflow: auto;
+      max-height: 72vh;
+      border-radius: 14px;
+      background: white;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+
     table {
-      width: 100%;
+      width: max-content;
+      min-width: 100%;
       border-collapse: collapse;
       background: white;
-      border-radius: 14px;
-      overflow: hidden;
     }
 
     th, td {
@@ -67,6 +74,8 @@
       text-align: left;
       font-size: 14px;
       vertical-align: top;
+      max-width: 260px;
+      white-space: normal;
     }
 
     th {
@@ -74,6 +83,7 @@
       color: white;
       position: sticky;
       top: 0;
+      z-index: 10;
     }
 
     tr:hover {
@@ -97,9 +107,9 @@
       display: none;
     }
 
-    .table-wrapper {
-      overflow-x: auto;
-      max-height: 70vh;
+    a {
+      color: #2563eb;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -118,12 +128,10 @@
   </div>
 
   <div class="card hidden" id="dashboard">
-    <div>
-      <button onclick="loadData()">Actualizar data</button>
-      <button class="secondary" onclick="logout()">Cerrar sesión</button>
-    </div>
+    <button onclick="loadData()">Actualizar data</button>
+    <button class="secondary" onclick="logout()">Cerrar sesión</button>
 
-    <br />
+    <br /><br />
 
     <input id="searchInput" placeholder="Buscar influencer..." oninput="renderTable()" />
 
@@ -156,11 +164,19 @@
             <th>Clasificación</th>
             <th>Precio</th>
             <th>Categoría</th>
-            <th>Contacto</th>
+            <th>Última persona contacto</th>
+            <th>Medio contacto</th>
+            <th>Detalle contacto</th>
             <th>Red 1</th>
             <th>Seguidores 1</th>
+            <th>Red 2</th>
+            <th>Seguidores 2</th>
             <th>Estado</th>
             <th>Condición</th>
+            <th>Trabajó con nosotros</th>
+            <th>Último pago</th>
+            <th>Fuente</th>
+            <th>Duplicado</th>
             <th>Especificaciones</th>
           </tr>
         </thead>
@@ -181,10 +197,7 @@
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    const { data, error } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { error } = await db.auth.signInWithPassword({ email, password });
 
     if (error) {
       document.getElementById("loginStatus").innerText = "Error: " + error.message;
@@ -236,7 +249,7 @@
     [...new Set(values.filter(Boolean))]
       .sort()
       .forEach(value => {
-        select.innerHTML += `<option value="${value}">${value}</option>`;
+        select.innerHTML += `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`;
       });
 
     select.value = current;
@@ -250,8 +263,19 @@
     const estado = document.getElementById("estadoFilter").value;
 
     const filtered = influencers.filter(i => {
+      const searchableText = [
+        i.influencer,
+        i.tipo_contenido,
+        i.formula_contenido,
+        i.categoria,
+        i.pais,
+        i.cliente,
+        i.medio_contacto,
+        i.contacto_detalle
+      ].join(" ").toLowerCase();
+
       return (
-        (!search || (i.influencer || "").toLowerCase().includes(search)) &&
+        (!search || searchableText.includes(search)) &&
         (!pais || i.pais === pais) &&
         (!cliente || i.cliente === cliente) &&
         (!categoria || i.categoria === categoria) &&
@@ -268,38 +292,57 @@
     filtered.forEach(i => {
       tbody.innerHTML += `
         <tr>
-          <td>${i.pais || ""}</td>
-          <td>${i.cliente || ""}</td>
-          <td><strong>${i.influencer || ""}</strong></td>
-          <td>${i.tipo_contenido || ""}</td>
-          <td>${i.formula_contenido || ""}</td>
-          <td>${i.precio_texto || ""}</td>
-          <td><span class="badge">${i.categoria || ""}</span></td>
-          <td>
-            <strong>${i.medio_contacto || ""}</strong><br>
-            ${i.contacto_detalle || ""}
-          </td>
+          <td>${safe(i.pais)}</td>
+          <td>${safe(i.cliente)}</td>
+          <td><strong>${safe(i.influencer)}</strong></td>
+          <td>${safe(i.tipo_contenido)}</td>
+          <td>${safe(i.formula_contenido)}</td>
+          <td>${safe(i.precio_texto)}</td>
+          <td><span class="badge">${safe(i.categoria)}</span></td>
+          <td>${safe(i.ultima_persona_contacto)}</td>
+          <td><strong>${safe(i.medio_contacto)}</strong></td>
+          <td>${safe(i.contacto_detalle)}</td>
           <td>${formatLink(i.red_1)}</td>
           <td>${formatNumber(i.seguidores_1)}</td>
-          <td><span class="badge">${i.estado || ""}</span></td>
-          <td>${i.condicion || ""}</td>
-          <td>${i.especificaciones || ""}</td>
+          <td>${formatLink(i.red_2)}</td>
+          <td>${formatNumber(i.seguidores_2)}</td>
+          <td><span class="badge">${safe(i.estado)}</span></td>
+          <td>${safe(i.condicion)}</td>
+          <td>${safe(i.trabajo_con_nosotros)}</td>
+          <td>${safe(i.ultimo_pago_realizado)}</td>
+          <td>${safe(i.fuente)}</td>
+          <td>${safe(i.duplicado)}</td>
+          <td>${safe(i.especificaciones)}</td>
         </tr>
       `;
     });
   }
 
   function formatNumber(value) {
-    if (!value) return "";
+    if (value === null || value === undefined || value === "" || value === 0) return "";
     return Number(value).toLocaleString("es-PE");
   }
 
   function formatLink(value) {
-    if (!value) return "";
-    if (value.startsWith("http")) {
-      return `<a href="${value}" target="_blank">Abrir</a>`;
+    if (!value || value === "0") return "";
+    const clean = String(value).trim();
+    if (clean.startsWith("http")) {
+      return `<a href="${escapeHtml(clean)}" target="_blank">Abrir</a>`;
     }
-    return value;
+    return escapeHtml(clean);
+  }
+
+  function safe(value) {
+    return escapeHtml(value || "");
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 </script>
 
