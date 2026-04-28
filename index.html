@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Influencers Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+
+<h1>Influencers Dashboard</h1>
+
+<button onclick="login()">Login</button>
+<button onclick="loadData()">Cargar Influencers</button>
+
+<pre id="data"></pre>
+
+<script>
+  const supabaseUrl = "uukcxcnurveoximopaqh";
+  const supabaseKey = "sb_publishable_QWck9-g1w3FUXpxl8i_30g_OTo9y8g0";
+
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+  async function login() {
+    const email = prompt("Email:");
+    const password = prompt("Password:");
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      alert("Error login");
+    } else {
+      alert("Logueado");
+    }
+  }
+
+  async function loadData() {
+    const { data, error } = await supabase
+      .from("influencers")
+      .select("*")
+      .limit(20);
+
+    document.getElementById("data").innerText = JSON.stringify(data, null, 2);
+  }
+</script>
+
+</body>
+</html>
