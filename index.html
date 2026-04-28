@@ -1,31 +1,185 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+  <meta charset="UTF-8" />
   <title>Influencers Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 24px;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #111827;
+      color: white;
+      margin-right: 8px;
+    }
+
+    button.secondary {
+      background: #6b7280;
+    }
+
+    input, select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    th {
+      background: #111827;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+
+    tr:hover {
+      background: #f3f4f6;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      font-size: 12px;
+      display: inline-block;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #555;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      max-height: 70vh;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>Influencers Dashboard</h1>
+  <h1>Influencers Dashboard</h1>
+  <div class="subtitle">Sistema interno de gestión de influencers</div>
 
-<button onclick="login()">Login</button>
-<button onclick="loadData()">Cargar Influencers</button>
+  <div class="card" id="loginCard">
+    <h3>Acceso privado</h3>
+    <input type="email" id="email" placeholder="Correo" />
+    <input type="password" id="password" placeholder="Contraseña" />
+    <button onclick="login()">Ingresar</button>
+    <div class="status" id="loginStatus"></div>
+  </div>
 
-<pre id="data"></pre>
+  <div class="card hidden" id="dashboard">
+    <div>
+      <button onclick="loadData()">Actualizar data</button>
+      <button class="secondary" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <br />
+
+    <input id="searchInput" placeholder="Buscar influencer..." oninput="renderTable()" />
+
+    <select id="paisFilter" onchange="renderTable()">
+      <option value="">Todos los países</option>
+    </select>
+
+    <select id="clienteFilter" onchange="renderTable()">
+      <option value="">Todos los clientes</option>
+    </select>
+
+    <select id="categoriaFilter" onchange="renderTable()">
+      <option value="">Todas las categorías</option>
+    </select>
+
+    <select id="estadoFilter" onchange="renderTable()">
+      <option value="">Todos los estados</option>
+    </select>
+
+    <p class="status" id="resultCount"></p>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>País</th>
+            <th>Cliente</th>
+            <th>Influencer</th>
+            <th>Tipo contenido</th>
+            <th>Clasificación</th>
+            <th>Precio</th>
+            <th>Categoría</th>
+            <th>Contacto</th>
+            <th>Red 1</th>
+            <th>Seguidores 1</th>
+            <th>Estado</th>
+            <th>Condición</th>
+            <th>Especificaciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
 
 <script>
-  // 🔥 CORRECCIÓN 1: URL COMPLETA
   const supabaseUrl = "https://uukcxcnurveoximopaqh.supabase.co";
-
-  // 🔥 CORRECCIÓN 2: TU PUBLISHABLE KEY (esta está bien)
   const supabaseKey = "sb_publishable_QWck9-g1w3FUXpxl8i_30g_OTo9y8g0";
 
-  // 🔥 CORRECCIÓN 3: NO usar mismo nombre "supabase"
   const db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+  let influencers = [];
+
   async function login() {
-    const email = prompt("Email:");
-    const password = prompt("Password:");
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
     const { data, error } = await db.auth.signInWithPassword({
       email,
@@ -33,23 +187,119 @@
     });
 
     if (error) {
-      alert("Error login: " + error.message);
-    } else {
-      alert("Logueado correctamente");
+      document.getElementById("loginStatus").innerText = "Error: " + error.message;
+      return;
     }
+
+    document.getElementById("loginStatus").innerText = "Ingreso correcto";
+    document.getElementById("loginCard").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+
+    await loadData();
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    location.reload();
   }
 
   async function loadData() {
     const { data, error } = await db
       .from("influencers")
       .select("*")
-      .limit(20);
+      .order("id", { ascending: true });
 
     if (error) {
-      document.getElementById("data").innerText = "Error: " + error.message;
-    } else {
-      document.getElementById("data").innerText = JSON.stringify(data, null, 2);
+      alert("Error cargando data: " + error.message);
+      return;
     }
+
+    influencers = data || [];
+    fillFilters();
+    renderTable();
+  }
+
+  function fillFilters() {
+    fillSelect("paisFilter", influencers.map(i => i.pais));
+    fillSelect("clienteFilter", influencers.map(i => i.cliente));
+    fillSelect("categoriaFilter", influencers.map(i => i.categoria));
+    fillSelect("estadoFilter", influencers.map(i => i.estado));
+  }
+
+  function fillSelect(id, values) {
+    const select = document.getElementById(id);
+    const current = select.value;
+    const firstText = select.options[0].text;
+
+    select.innerHTML = `<option value="">${firstText}</option>`;
+
+    [...new Set(values.filter(Boolean))]
+      .sort()
+      .forEach(value => {
+        select.innerHTML += `<option value="${value}">${value}</option>`;
+      });
+
+    select.value = current;
+  }
+
+  function renderTable() {
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const pais = document.getElementById("paisFilter").value;
+    const cliente = document.getElementById("clienteFilter").value;
+    const categoria = document.getElementById("categoriaFilter").value;
+    const estado = document.getElementById("estadoFilter").value;
+
+    const filtered = influencers.filter(i => {
+      return (
+        (!search || (i.influencer || "").toLowerCase().includes(search)) &&
+        (!pais || i.pais === pais) &&
+        (!cliente || i.cliente === cliente) &&
+        (!categoria || i.categoria === categoria) &&
+        (!estado || i.estado === estado)
+      );
+    });
+
+    document.getElementById("resultCount").innerText =
+      `Mostrando ${filtered.length} de ${influencers.length} influencers`;
+
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+
+    filtered.forEach(i => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${i.pais || ""}</td>
+          <td>${i.cliente || ""}</td>
+          <td><strong>${i.influencer || ""}</strong></td>
+          <td>${i.tipo_contenido || ""}</td>
+          <td>${i.formula_contenido || ""}</td>
+          <td>${i.precio_texto || ""}</td>
+          <td><span class="badge">${i.categoria || ""}</span></td>
+          <td>
+            <strong>${i.medio_contacto || ""}</strong><br>
+            ${i.contacto_detalle || ""}
+          </td>
+          <td>${formatLink(i.red_1)}</td>
+          <td>${formatNumber(i.seguidores_1)}</td>
+          <td><span class="badge">${i.estado || ""}</span></td>
+          <td>${i.condicion || ""}</td>
+          <td>${i.especificaciones || ""}</td>
+        </tr>
+      `;
+    });
+  }
+
+  function formatNumber(value) {
+    if (!value) return "";
+    return Number(value).toLocaleString("es-PE");
+  }
+
+  function formatLink(value) {
+    if (!value) return "";
+    if (value.startsWith("http")) {
+      return `<a href="${value}" target="_blank">Abrir</a>`;
+    }
+    return value;
   }
 </script>
 
