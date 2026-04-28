@@ -6,190 +6,170 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f6fa;
-      margin: 0;
-      padding: 24px;
-      color: #222;
+    body { font-family: Arial, sans-serif; background:#f5f6fa; margin:0; padding:24px; color:#222; }
+    h1 { margin-bottom:4px; }
+    .subtitle { color:#666; margin-bottom:24px; }
+    .card { background:white; padding:20px; border-radius:14px; box-shadow:0 4px 14px rgba(0,0,0,.08); margin-bottom:20px; }
+    button { padding:10px 14px; border:0; border-radius:8px; cursor:pointer; background:#111827; color:white; margin-right:8px; }
+    button.secondary { background:#6b7280; }
+    button.success { background:#15803d; }
+    button.small { padding:7px 10px; font-size:12px; }
+    input, select, textarea { padding:10px; border-radius:8px; border:1px solid #ccc; margin-right:8px; margin-bottom:8px; min-width:190px; }
+    textarea { min-height:70px; }
+    .hidden { display:none; }
+    .status { margin-top:10px; color:#555; }
+    .table-wrapper { overflow:auto; height:70vh; max-width:100%; border-radius:14px; background:white; box-shadow:0 4px 14px rgba(0,0,0,.08); }
+    table { border-collapse:collapse; min-width:2900px; background:white; }
+    th, td { padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px; vertical-align:top; max-width:260px; white-space:normal; }
+    th { background:#111827; color:white; position:sticky; top:0; z-index:50; }
+    tr:hover { background:#f3f4f6; }
+    .badge { padding:4px 8px; border-radius:999px; background:#e5e7eb; font-size:12px; display:inline-block; margin:2px 2px 2px 0; }
+    a { color:#2563eb; font-weight:bold; }
+
+    .modal-bg {
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:none; align-items:center; justify-content:center; z-index:999;
     }
 
-    h1 { margin-bottom: 4px; }
-
-    .subtitle {
-      color: #666;
-      margin-bottom: 24px;
+    .modal {
+      background:white; width:90%; max-width:1050px; max-height:90vh;
+      overflow:auto; border-radius:16px; padding:24px;
+      box-shadow:0 20px 40px rgba(0,0,0,.25);
     }
 
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 14px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
+    .modal-grid {
+      display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;
     }
 
-    button {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #111827;
-      color: white;
-      margin-right: 8px;
-    }
+    .field label { display:block; font-size:12px; color:#555; margin-bottom:4px; }
+    .field input, .field select, .field textarea { width:100%; box-sizing:border-box; min-width:0; }
 
-    button.secondary { background: #6b7280; }
-
-    input, select {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-right: 8px;
-      margin-bottom: 8px;
-      min-width: 190px;
-    }
-
-    .hidden { display: none; }
-
-    .status {
-      margin-top: 10px;
-      color: #555;
-    }
-
-    .table-wrapper {
-      overflow: auto;
-      height: 70vh;
-      max-width: 100%;
-      border-radius: 14px;
-      background: white;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-    }
-
-    table {
-      border-collapse: collapse;
-      min-width: 2700px;
-      background: white;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-      font-size: 14px;
-      vertical-align: top;
-      max-width: 260px;
-      white-space: normal;
-    }
-
-    th {
-      background: #111827;
-      color: white;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-
-    tr:hover { background: #f3f4f6; }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #e5e7eb;
-      font-size: 12px;
-      display: inline-block;
-      margin: 2px 2px 2px 0;
-    }
-
-    a {
-      color: #2563eb;
-      font-weight: bold;
-    }
+    .full { grid-column:1 / -1; }
   </style>
 </head>
 
 <body>
 
-  <h1>Influencers Dashboard</h1>
-  <div class="subtitle">Sistema interno de gestión de influencers</div>
+<h1>Influencers Dashboard</h1>
+<div class="subtitle">Sistema interno de gestión de influencers</div>
 
-  <div class="card" id="loginCard">
-    <h3>Acceso privado</h3>
-    <input type="email" id="email" placeholder="Correo" />
-    <input type="password" id="password" placeholder="Contraseña" />
-    <button onclick="login()">Ingresar</button>
-    <div class="status" id="loginStatus"></div>
+<div class="card" id="loginCard">
+  <h3>Acceso privado</h3>
+  <input type="email" id="email" placeholder="Correo" />
+  <input type="password" id="password" placeholder="Contraseña" />
+  <button onclick="login()">Ingresar</button>
+  <div class="status" id="loginStatus"></div>
+</div>
+
+<div class="card hidden" id="dashboard">
+  <button onclick="loadData()">Actualizar data</button>
+  <button class="success" onclick="openNewModal()">+ Nuevo influencer</button>
+  <button class="secondary" onclick="logout()">Cerrar sesión</button>
+
+  <br /><br />
+
+  <input id="searchInput" placeholder="Buscar influencer, contacto, categoría..." oninput="renderTable()" />
+
+  <select id="paisFilter" onchange="renderTable()"><option value="">Todos los países</option></select>
+  <select id="clienteFilter" onchange="renderTable()"><option value="">Todos los clientes</option></select>
+  <select id="clasificacionFilter" onchange="renderTable()"><option value="">Todas las clasificaciones</option></select>
+  <select id="categoriaFilter" onchange="renderTable()"><option value="">Todas las categorías</option></select>
+  <select id="estadoFilter" onchange="renderTable()"><option value="">Todos los estados</option></select>
+
+  <p class="status" id="resultCount"></p>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Acción</th>
+          <th>País</th>
+          <th>Cliente</th>
+          <th>Influencer</th>
+          <th>Tipo contenido</th>
+          <th>Clasificación</th>
+          <th>Precio</th>
+          <th>Categoría</th>
+          <th>Última persona contacto</th>
+          <th>Medio contacto</th>
+          <th>Detalle contacto</th>
+          <th>Red 1</th>
+          <th>Seguidores 1</th>
+          <th>Red 2</th>
+          <th>Seguidores 2</th>
+          <th>Estado</th>
+          <th>Condición</th>
+          <th>Trabajó con nosotros</th>
+          <th>Último pago</th>
+          <th>Fuente</th>
+          <th>Duplicado</th>
+          <th>Última actualización</th>
+          <th>Especificaciones</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
   </div>
+</div>
 
-  <div class="card hidden" id="dashboard">
-    <button onclick="loadData()">Actualizar data</button>
-    <button class="secondary" onclick="logout()">Cerrar sesión</button>
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Nuevo influencer</h2>
 
-    <br /><br />
+    <input type="hidden" id="form_id" />
 
-    <input id="searchInput" placeholder="Buscar influencer, contacto, categoría..." oninput="renderTable()" />
+    <div class="modal-grid">
+      <div class="field"><label>País</label><input id="form_pais"></div>
+      <div class="field"><label>Cliente</label><input id="form_cliente" placeholder="Ej: Takenos, Binance"></div>
+      <div class="field"><label>Influencer</label><input id="form_influencer"></div>
 
-    <select id="paisFilter" onchange="renderTable()">
-      <option value="">Todos los países</option>
-    </select>
+      <div class="field"><label>Tipo contenido</label><input id="form_tipo_contenido"></div>
+      <div class="field"><label>Clasificación</label><input id="form_formula_contenido" placeholder="Ej: Lifestyle, Cripto"></div>
+      <div class="field"><label>Categoría</label><input id="form_categoria"></div>
 
-    <select id="clienteFilter" onchange="renderTable()">
-      <option value="">Todos los clientes</option>
-    </select>
+      <div class="field full"><label>Precio / tarifario</label><textarea id="form_precio_texto"></textarea></div>
 
-    <select id="clasificacionFilter" onchange="renderTable()">
-      <option value="">Todas las clasificaciones</option>
-    </select>
+      <div class="field"><label>Última persona contacto</label><input id="form_ultima_persona_contacto"></div>
+      <div class="field"><label>Medio contacto</label><input id="form_medio_contacto" placeholder="WhatsApp, IG, TikTok, Correo"></div>
+      <div class="field"><label>Detalle contacto</label><input id="form_contacto_detalle"></div>
 
-    <select id="categoriaFilter" onchange="renderTable()">
-      <option value="">Todas las categorías</option>
-    </select>
+      <div class="field"><label>Red 1</label><input id="form_red_1"></div>
+      <div class="field"><label>Seguidores 1</label><input id="form_seguidores_1" type="number"></div>
+      <div class="field"><label>Red 2</label><input id="form_red_2"></div>
 
-    <select id="estadoFilter" onchange="renderTable()">
-      <option value="">Todos los estados</option>
-    </select>
+      <div class="field"><label>Seguidores 2</label><input id="form_seguidores_2" type="number"></div>
+      <div class="field"><label>Estado</label><input id="form_estado"></div>
+      <div class="field"><label>Condición</label><input id="form_condicion"></div>
 
-    <p class="status" id="resultCount"></p>
+      <div class="field"><label>Trabajó con nosotros</label><input id="form_trabajo_con_nosotros"></div>
+      <div class="field"><label>Último pago realizado</label><input id="form_ultimo_pago_realizado"></div>
+      <div class="field"><label>Fuente</label><input id="form_fuente"></div>
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>País</th>
-            <th>Cliente</th>
-            <th>Influencer</th>
-            <th>Tipo contenido</th>
-            <th>Clasificación</th>
-            <th>Precio</th>
-            <th>Categoría</th>
-            <th>Última persona contacto</th>
-            <th>Medio contacto</th>
-            <th>Detalle contacto</th>
-            <th>Red 1</th>
-            <th>Seguidores 1</th>
-            <th>Red 2</th>
-            <th>Seguidores 2</th>
-            <th>Estado</th>
-            <th>Condición</th>
-            <th>Trabajó con nosotros</th>
-            <th>Último pago</th>
-            <th>Fuente</th>
-            <th>Duplicado</th>
-            <th>Especificaciones</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+      <div class="field"><label>Duplicado</label><input id="form_duplicado"></div>
+      <div class="field full"><label>Especificaciones / comentarios</label><textarea id="form_especificaciones"></textarea></div>
     </div>
+
+    <br />
+    <button class="success" onclick="saveInfluencer()">Guardar</button>
+    <button class="secondary" onclick="closeModal()">Cancelar</button>
+    <p class="status" id="formStatus"></p>
   </div>
+</div>
 
 <script>
   const supabaseUrl = "https://uukcxcnurveoximopaqh.supabase.co";
   const supabaseKey = "sb_publishable_QWck9-g1w3FUXpxl8i_30g_OTo9y8g0";
-
   const db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
   let influencers = [];
+
+  const fields = [
+    "pais", "cliente", "influencer", "tipo_contenido", "formula_contenido",
+    "precio_texto", "categoria", "ultima_persona_contacto", "medio_contacto",
+    "contacto_detalle", "red_1", "seguidores_1", "red_2", "seguidores_2",
+    "estado", "condicion", "trabajo_con_nosotros", "ultimo_pago_realizado",
+    "fuente", "duplicado", "especificaciones"
+  ];
 
   async function login() {
     const email = document.getElementById("email").value;
@@ -202,10 +182,8 @@
       return;
     }
 
-    document.getElementById("loginStatus").innerText = "Ingreso correcto";
     document.getElementById("loginCard").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
-
     await loadData();
   }
 
@@ -228,6 +206,68 @@
     influencers = data || [];
     fillFilters();
     renderTable();
+  }
+
+  function openNewModal() {
+    document.getElementById("modalTitle").innerText = "Nuevo influencer";
+    document.getElementById("form_id").value = "";
+    fields.forEach(f => document.getElementById("form_" + f).value = "");
+    document.getElementById("formStatus").innerText = "";
+    document.getElementById("modalBg").style.display = "flex";
+  }
+
+  function openEditModal(id) {
+    const item = influencers.find(i => i.id === id);
+    if (!item) return;
+
+    document.getElementById("modalTitle").innerText = "Editar influencer";
+    document.getElementById("form_id").value = item.id;
+
+    fields.forEach(f => {
+      const el = document.getElementById("form_" + f);
+      if (el) el.value = item[f] ?? "";
+    });
+
+    document.getElementById("formStatus").innerText = "";
+    document.getElementById("modalBg").style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById("modalBg").style.display = "none";
+  }
+
+  async function saveInfluencer() {
+    const id = document.getElementById("form_id").value;
+
+    const payload = {};
+    fields.forEach(f => {
+      let value = document.getElementById("form_" + f).value;
+
+      if (f === "seguidores_1" || f === "seguidores_2") {
+        value = value ? Number(value) : 0;
+      }
+
+      payload[f] = value || null;
+    });
+
+    document.getElementById("formStatus").innerText = "Guardando...";
+
+    let result;
+
+    if (id) {
+      result = await db.from("influencers").update(payload).eq("id", id);
+    } else {
+      result = await db.from("influencers").insert(payload);
+    }
+
+    if (result.error) {
+      document.getElementById("formStatus").innerText = "Error: " + result.error.message;
+      return;
+    }
+
+    document.getElementById("formStatus").innerText = "Guardado correctamente";
+    await loadData();
+    setTimeout(closeModal, 600);
   }
 
   function fillFilters() {
@@ -269,27 +309,7 @@
     const estado = document.getElementById("estadoFilter").value;
 
     const filtered = influencers.filter(i => {
-      const searchableText = [
-        i.pais,
-        i.cliente,
-        i.influencer,
-        i.tipo_contenido,
-        i.formula_contenido,
-        i.precio_texto,
-        i.categoria,
-        i.ultima_persona_contacto,
-        i.medio_contacto,
-        i.contacto_detalle,
-        i.red_1,
-        i.red_2,
-        i.estado,
-        i.condicion,
-        i.trabajo_con_nosotros,
-        i.ultimo_pago_realizado,
-        i.fuente,
-        i.duplicado,
-        i.especificaciones
-      ].join(" ").toLowerCase();
+      const searchableText = fields.map(f => i[f]).join(" ").toLowerCase();
 
       return (
         (!search || searchableText.includes(search)) &&
@@ -310,6 +330,7 @@
     filtered.forEach(i => {
       tbody.innerHTML += `
         <tr>
+          <td><button class="small" onclick="openEditModal(${i.id})">Editar</button></td>
           <td>${renderBadges(i.pais)}</td>
           <td>${renderBadges(i.cliente)}</td>
           <td><strong>${safe(i.influencer)}</strong></td>
@@ -330,6 +351,7 @@
           <td>${safe(i.ultimo_pago_realizado)}</td>
           <td>${safe(i.fuente)}</td>
           <td>${safe(i.duplicado)}</td>
+          <td>${formatDate(i.fecha_ultima_actualizacion)}</td>
           <td>${safe(i.especificaciones)}</td>
         </tr>
       `;
@@ -338,38 +360,29 @@
 
   function cellHasValue(cell, selected) {
     if (!cell || !selected) return false;
-
-    return String(cell)
-      .split(",")
-      .map(value => value.trim().toLowerCase())
-      .includes(String(selected).trim().toLowerCase());
+    return String(cell).split(",").map(v => v.trim().toLowerCase()).includes(String(selected).trim().toLowerCase());
   }
 
   function renderBadges(value) {
     if (!value) return "";
-
-    return String(value)
-      .split(",")
-      .map(v => v.trim())
-      .filter(Boolean)
-      .map(v => `<span class="badge">${escapeHtml(v)}</span>`)
-      .join(" ");
+    return String(value).split(",").map(v => v.trim()).filter(Boolean)
+      .map(v => `<span class="badge">${escapeHtml(v)}</span>`).join(" ");
   }
 
   function formatNumber(value) {
-    if (value === null || value === undefined || value === "" || value === 0) return "";
+    if (!value || value === 0) return "";
     return Number(value).toLocaleString("es-PE");
+  }
+
+  function formatDate(value) {
+    if (!value) return "";
+    return new Date(value).toLocaleString("es-PE");
   }
 
   function formatLink(value) {
     if (!value || value === "0") return "";
-
     const clean = String(value).trim();
-
-    if (clean.startsWith("http")) {
-      return `<a href="${escapeHtml(clean)}" target="_blank">Abrir</a>`;
-    }
-
+    if (clean.startsWith("http")) return `<a href="${escapeHtml(clean)}" target="_blank">Abrir</a>`;
     return escapeHtml(clean);
   }
 
